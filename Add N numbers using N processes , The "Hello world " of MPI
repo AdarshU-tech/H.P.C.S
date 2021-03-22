@@ -1,0 +1,79 @@
+
+
+
+#include <stdio.h>
+#include <mpi.h>
+
+#define MAX 20
+
+void main(int argc, char *argv[]){
+	int rank, N, i=0, sum1=0,sum2=0, num[MAX];
+	MPI_Status status;
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	
+	if(rank==0){
+		printf("Enter the array size N: ");
+		fflush(stdout);
+		scanf("%d",&N);
+
+		printf("\nEnter  array elements ");
+		fflush(stdout);
+		for(i=0; i<N; i++){
+			scanf("%d", &num[i]);
+		}
+
+
+		MPI_Send(&N, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
+		MPI_Send(&N, 1, MPI_INT, 2, 0, MPI_COMM_WORLD);
+
+		MPI_Send(&num, N, MPI_INT, 1, 1, MPI_COMM_WORLD);
+		MPI_Send(&num, N, MPI_INT, 2, 1, MPI_COMM_WORLD);
+
+		MPI_Recv(&sum1, 1, MPI_INT, 1, 2, MPI_COMM_WORLD, &status);
+		MPI_Recv(&sum2, 1, MPI_INT, 2, 2, MPI_COMM_WORLD, &status);
+
+		printf("FIRST PROCESS SUM = %d\n", sum1);
+		printf("SECOND PROCESS SUM = %d\n", sum2);
+		sum1=sum1+sum2;
+		printf("TOTAL SUM IS %d", sum1);
+
+}else if(rank==1){
+		
+		MPI_Recv(&N, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		
+		MPI_Recv(&num, N, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+		
+		for(i=0; i<N/2; i++){
+			
+			sum1=sum1 + num[i];
+		}
+
+		
+
+		MPI_Send(&sum1, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+
+	}
+else if(rank==2){
+		
+		MPI_Recv(&N, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
+		
+		MPI_Recv(&num, N, MPI_INT, 0, 1, MPI_COMM_WORLD, &status);
+		
+		for(i=N/2; i<N; i++){
+			sum2=sum2+num[i];
+			
+
+		}
+			
+
+			MPI_Send(&sum2, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+	}
+
+MPI_Finalize();
+
+}
+
+
+
