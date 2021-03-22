@@ -1,0 +1,62 @@
+//This program will read a N*N matrix of integers
+// scatters each row of the matrix and runs mpi_scan on the array
+// and gathers the 2D array to print it out in the root process
+//
+
+#include <stdio.h>
+#include <mpi.h>
+
+#define MAX 25
+
+void main(int argc, char *argv[]){
+	int rank, size,i;
+	int data[MAX], dataRecv[MAX], dataRecvSum[MAX];
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+	if(rank==0){
+		//read the matrix of the size N
+		printf("Please enter the matrix of size N*N=%d :", size*size);
+		fflush(stdout);
+		for(i=0; i<size*size; i++)
+			scanf("%d", &data[i]);
+	}
+
+	//scatter the matrix with count=N
+	MPI_Scatter(data, size, MPI_INT, dataRecv, size, MPI_INT, 0, MPI_COMM_WORLD);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	
+	MPI_Scan(dataRecv, dataRecvSum, size, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	MPI_Gather(dataRecvSum, size, MPI_INT, dataRecv, size, MPI_INT, 0, MPI_COMM_WORLD);
+
+	if(rank==0){
+
+		//print out the number of occurrence of the element x in the matrix data
+		printf("\nThe Original matrix is :");
+		fflush(stdout);
+		for(i=0; i<size*size; i++){
+			if(i%size==0)
+				printf("\n");
+			printf("%d ", data[i]);
+		}
+		fflush(stdout);
+
+
+		printf("\nThe cumulative sum matrix is :");
+		fflush(stdout);
+		for(i=0; i<size*size; i++){
+			if(i%size==0)
+				printf("\n");
+			printf("%d ", dataRecv[i]);
+		}
+		fflush(stdout);
+
+	}
+
+	MPI_Finalize();
+	
+}
