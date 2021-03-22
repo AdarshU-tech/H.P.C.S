@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX 32
+
+
+__global__ void rev_ascii(char *word, char *word_rev){
+	int i=threadIdx.x;
+	int num, rev_num;
+	
+		num = word[i] - NULL;
+		rev_num = 0;
+	    while(num > 0)
+	    {
+	        rev_num = rev_num*10 + num%10;
+	        num = num/10;
+	    }
+	    word_rev[i] = char(rev_num);
+	    
+	
+}
+
+int main(){
+	int N;
+
+	char word[MAX], word_rev[MAX], *d_w, *d_r;
+	printf("enter the string: ");
+	gets(word);
+	
+	N = strlen(word)+1; //this is to send the EOL
+	
+	cudaMalloc((void **)&d_w, N*sizeof(char));
+	cudaMalloc((void **)&d_r, N*sizeof(char));
+	
+	cudaMemcpy(d_w, word, N*sizeof(char), cudaMemcpyHostToDevice);
+	
+	rev_ascii<<<1,N>>>(d_w, d_r);
+	
+	cudaMemcpy(word_rev, d_r, N*sizeof(char), cudaMemcpyDeviceToHost);
+	
+	printf("reversed string is %s", word_rev);
+	
+	printf("\n");
+	
+	cudaFree(d_w);
+	cudaFree(d_r);
+
+	return 0;
+	
+}
